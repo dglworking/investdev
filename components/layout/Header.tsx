@@ -5,8 +5,27 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/components/providers/AuthProvider";
+
+import { useRouter } from "next/navigation";
+import { logout } from "@/features/auth/session";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+
+    router.push("/login");
+  };
   const pathname = usePathname();  
   return (
     <header className="sticky top-0 z-50 h-16 border-b bg-white">
@@ -80,11 +99,43 @@ export default function Header() {
             className="cursor-pointer text-slate-600"
           />
 
-          <Avatar>
+          <div className="hidden md:flex flex-col text-right">
+            <span className="text-sm font-medium">
+              {user ? "Welcome" : "Guest"}
+            </span>
 
-            <AvatarFallback>DV</AvatarFallback>
+            <span className="text-xs text-slate-500">
+              {user?.email ?? "Not signed in"}
+            </span>
+          </div>
 
-          </Avatar>
+          <DropdownMenu>
+
+            <DropdownMenuTrigger>
+
+              <Avatar className="cursor-pointer">
+
+                <AvatarFallback>
+                  {user?.email
+                    ? user.email.charAt(0).toUpperCase()
+                    : "G"}
+                </AvatarFallback>
+
+              </Avatar>
+
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+
+              <DropdownMenuItem
+                onClick={handleLogout}
+              >
+                Logout
+              </DropdownMenuItem>
+
+            </DropdownMenuContent>
+
+          </DropdownMenu>
 
         </div>
 
