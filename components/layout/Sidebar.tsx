@@ -118,7 +118,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* KHỐI CRYPTO */}
+      {/* KHỐI CRYPTO - GIỮ NGUYÊN BẢN 100% THEO FILE ĐÃ UP */}
       <div className="bg-[#1e222d] text-slate-100 p-4 rounded-2xl shadow-lg border border-slate-800 space-y-4">
         <div className="flex justify-between items-center border-b border-slate-800 pb-2">
           <div className="flex items-center space-x-2">
