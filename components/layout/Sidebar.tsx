@@ -1,72 +1,176 @@
 "use client";
 
-import {
-  ChartCandlestick,
-  House,
-  Newspaper,
-  Star,
-  Users,
-} from "lucide-react";
-
+import { useEffect, useState } from "react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
-const menus = [
-  {
-    title: "Home",
-    href: "/",
-    icon: House,
-  },
-  {
-    title: "Markets",
-    href: "/markets",
-    icon: ChartCandlestick,
-  },
-  {
-    title: "Community",
-    href: "/community",
-    icon: Users,
-  },
-  {
-    title: "News",
-    href: "/news",
-    icon: Newspaper,
-  },
-  {
-    title: "Watchlist",
-    href: "/watchlist",
-    icon: Star,
-  },
-];
+interface TickerItem {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  percent: number;
+}
 
 export default function Sidebar() {
-  const pathname = usePathname();  
+  const [stocks, setStocks] = useState<TickerItem[]>([]);
+  const [cryptos, setCryptos] = useState<TickerItem[]>([]);
+  const [loadingStocks, setLoadingStocks] = useState(true);
+  const [loadingCryptos, setLoadingCryptos] = useState(true);
+
+  useEffect(() => {
+    async function fetchTopStocks() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/vnstock/top-active");
+        const resData = await res.json();
+        if (resData.success && resData.data) {
+          setStocks(resData.data);
+        }
+      } catch (error) {
+        console.error("Lỗi cập nhật dòng tiền Chứng khoán:", error);
+      } finally {
+        setLoadingStocks(false);
+      }
+    }
+    fetchTopStocks();
+    const interval = setInterval(fetchTopStocks, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    async function fetchTopCryptos() {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/crypto/top-active");
+        const resData = await res.json();
+        if (resData.success && resData.data) {
+          setCryptos(resData.data);
+        }
+      } catch (error) {
+        console.error("Lỗi cập nhật dòng tiền Crypto:", error);
+      } finally {
+        setLoadingCryptos(false);
+      }
+    }
+    fetchTopCryptos();
+    const interval = setInterval(fetchTopCryptos, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <aside className="w-64 border-r bg-white">
-      <div className="p-6">
-
-        <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Navigation
+    <aside className="w-72 border-r bg-slate-50 p-4 space-y-6 hidden xl:block min-h-[calc(100vh-64px)] overflow-y-auto">
+      <div>
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+          Các mã hot nhất
         </p>
+      </div>
 
-        <nav className="space-y-2">
+      {/* KHỐI CỔ PHIẾU */}
+      <div className="bg-[#1e222d] text-slate-100 p-4 rounded-2xl shadow-lg border border-slate-800 space-y-4">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-sm font-bold tracking-wide">Cổ phiếu</span>
+          </div>
+          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-medium">
+            TOP VOLUME
+          </span>
+        </div>
 
-          {menus.map((item) => {
-            const Icon = item.icon;
+        <div className="space-y-3">
+          {loadingStocks ? (
+            <p className="text-xs text-slate-500 animate-pulse py-2">Đang quét sàn...</p>
+          ) : stocks.length === 0 ? (
+            <p className="text-xs text-slate-400 py-2">Chưa có dữ liệu</p>
+          ) : (
+            stocks.map((stock) => {
+              const isPositive = stock.change >= 0;
+              return (
+                <Link 
+                  key={stock.symbol} 
+                  href={`/markets?ticker=${stock.symbol}`}
+                  className="flex justify-between items-center group cursor-pointer hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-150 block"
+                >
+                  <div className="space-y-0.5 max-w-[55%]">
+                    <h4 className="font-bold text-sm tracking-wide text-white group-hover:text-blue-400 transition-colors uppercase">
+                      {stock.symbol}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 truncate font-medium">
+                      {stock.name}
+                    </p>
+                  </div>
+                  <div className="text-right font-mono">
+                    <span className="text-sm font-bold text-slate-100">
+                      {stock.price.toFixed(2)}
+                    </span>
+                    <div className={`text-[11px] font-semibold flex items-center justify-end space-x-1 ${
+                      isPositive ? "text-green-400" : "text-red-400"
+                    }`}>
+                      {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                      <span>
+                        {isPositive ? "+" : ""}{stock.change.toFixed(2)} ({isPositive ? "+" : ""}{stock.percent.toFixed(2)}%)
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
+          )}
+        </div>
+      </div>
 
-            return (
-              <button
-                key={item.title}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-slate-700 transition hover:bg-slate-100"
-              >
-                <Icon size={18} />
+      {/* KHỐI CRYPTO */}
+      <div className="bg-[#1e222d] text-slate-100 p-4 rounded-2xl shadow-lg border border-slate-800 space-y-4">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+            <span className="text-sm font-bold tracking-wide">Tiền số</span>
+          </div>
+          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-medium">
+            TOP VOLUME
+          </span>
+        </div>
 
-                <span>{item.title}</span>
-              </button>
-            );
-          })}
-
-        </nav>
+        <div className="space-y-3">
+          {loadingCryptos ? (
+            <p className="text-xs text-slate-500 animate-pulse py-2">Đang kết nối luồng Binance...</p>
+          ) : (
+            cryptos.map((crypto) => {
+              const isPositive = crypto.percent >= 0;
+              return (
+                <Link 
+                  key={crypto.symbol} 
+                  href={`/markets?ticker=${crypto.symbol}`}
+                  className="flex justify-between items-center group cursor-pointer hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-150 block"
+                >
+                  <div className="space-y-0.5">
+                    <h4 className="font-bold text-sm tracking-wide text-white group-hover:text-yellow-400 transition-colors">
+                      ${crypto.symbol}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      {crypto.name}
+                    </p>
+                  </div>
+                  <div className="text-right font-mono">
+                    <span className="text-sm font-bold text-slate-100">
+                      ${crypto.price.toLocaleString(undefined, {
+                        minimumFractionDigits: crypto.price < 1 ? 4 : 2,
+                        maximumFractionDigits: crypto.price < 1 ? 4 : 2
+                      })}
+                    </span>
+                    <div className={`text-[11px] font-semibold flex items-center justify-end space-x-1 ${
+                      isPositive ? "text-green-400" : "text-red-400"
+                    }`}>
+                      {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                      <span>
+                        {isPositive ? "+" : ""}{crypto.percent.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
+          )}
+        </div>
       </div>
     </aside>
   );

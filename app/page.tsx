@@ -1,7 +1,7 @@
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import RightSidebar from "@/components/layout/RightSidebar";
-import MarketCard from "@/components/common/MarketCard";
+
 import CryptoMarket from "@/components/stock/CryptoMarket";
 import MarketOverview from "@/components/stock/MarketOverview";
 import WatchlistCard from "@/components/stock/WatchlistCard";
