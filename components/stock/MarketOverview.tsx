@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ResponsiveContainer, ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Cell } from "recharts";
 import MarketCard from "@/components/common/MarketCard";
+import { getMarketSummary } from "@/features/stocks/service";
 
 interface IndexSession {
   time: string;
@@ -61,20 +62,24 @@ export default function MarketOverview() {
   };
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/vnstock/summary")
-      .then((res) => res.json())
-      .then((resData) => {
-        if (resData.success && resData.data) {
-          const raw = resData.data;
-          setMarketData({
-            VNINDEX: processIndexData(raw.VNINDEX),
-            VN30: processIndexData(raw.VN30),
-            HNX: processIndexData(raw.HNX),
-            UPCOM: processIndexData(raw.UPCOM),
-          });
-        }
-      })
-      .catch((err) => console.error("Lỗi kết nối:", err));
+
+    async function loadSummary() {
+
+      const raw = await getMarketSummary();
+
+      if (!raw) return;
+
+      setMarketData({
+        VNINDEX: processIndexData(raw.VNINDEX),
+        VN30: processIndexData(raw.VN30),
+        HNX: processIndexData(raw.HNX),
+        UPCOM: processIndexData(raw.UPCOM),
+      });
+
+    }
+
+    loadSummary();
+
   }, []);
 
   const chartData = marketData[selectedIndex]?.rawData || [];
@@ -85,9 +90,6 @@ export default function MarketOverview() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">VietNam Market Overview</h2>
-      </div>
 
       {/* Grid danh sách các chỉ số */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">

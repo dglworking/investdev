@@ -88,7 +88,7 @@ export default function CryptoMarket() {
     <section className="space-y-6">
       {/* Grid danh sách Crypto Card */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {coins.map((coin) => {
+        {coins.slice(0, 4).map((coin) => {
           const isSelected = selectedCoinId === coin.id;
           const isPositive = coin.price_change_percentage_24h >= 0;
 

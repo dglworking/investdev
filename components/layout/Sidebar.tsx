@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
+import {
+  getStockMarket,
+  getCryptoMarket,
+  type Coin,
+} from "@/features/stocks/service";
 
 interface TickerItem {
   symbol: string;
@@ -14,46 +19,36 @@ interface TickerItem {
 
 export default function Sidebar() {
   const [stocks, setStocks] = useState<TickerItem[]>([]);
-  const [cryptos, setCryptos] = useState<TickerItem[]>([]);
+  const [cryptos, setCryptos] = useState<Coin[]>([]);
   const [loadingStocks, setLoadingStocks] = useState(true);
   const [loadingCryptos, setLoadingCryptos] = useState(true);
 
   useEffect(() => {
-    async function fetchTopStocks() {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/vnstock/top-active");
-        const resData = await res.json();
-        if (resData.success && resData.data) {
-          setStocks(resData.data);
-        }
-      } catch (error) {
-        console.error("Lỗi cập nhật dòng tiền Chứng khoán:", error);
-      } finally {
-        setLoadingStocks(false);
-      }
-    }
-    fetchTopStocks();
-    const interval = setInterval(fetchTopStocks, 15000);
-    return () => clearInterval(interval);
-  }, []);
+    let mounted = true;
 
-  useEffect(() => {
-    async function fetchTopCryptos() {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/crypto/top-active");
-        const resData = await res.json();
-        if (resData.success && resData.data) {
-          setCryptos(resData.data);
-        }
-      } catch (error) {
-        console.error("Lỗi cập nhật dòng tiền Crypto:", error);
-      } finally {
-        setLoadingCryptos(false);
-      }
+    async function loadData() {
+      const [stocksData, cryptoData] = await Promise.all([
+        getStockMarket(),
+        getCryptoMarket(),
+      ]);
+
+      if (!mounted) return;
+
+      setStocks(stocksData);
+      setCryptos(cryptoData);
+
+      setLoadingStocks(false);
+      setLoadingCryptos(false);
     }
-    fetchTopCryptos();
-    const interval = setInterval(fetchTopCryptos, 15000);
-    return () => clearInterval(interval);
+
+    loadData();
+
+    const timer = setInterval(loadData, 15000);
+
+    return () => {
+      mounted = false;
+      clearInterval(timer);
+    };
   }, []);
 
   return (
@@ -135,7 +130,8 @@ export default function Sidebar() {
             <p className="text-xs text-slate-500 animate-pulse py-2">Đang kết nối luồng Binance...</p>
           ) : (
             cryptos.map((crypto) => {
-              const isPositive = crypto.percent >= 0;
+              const isPositive =
+                crypto.price_change_percentage_24h >= 0;
               return (
                 <Link 
                   key={crypto.symbol} 
@@ -152,9 +148,11 @@ export default function Sidebar() {
                   </div>
                   <div className="text-right font-mono">
                     <span className="text-sm font-bold text-slate-100">
-                      ${crypto.price.toLocaleString(undefined, {
-                        minimumFractionDigits: crypto.price < 1 ? 4 : 2,
-                        maximumFractionDigits: crypto.price < 1 ? 4 : 2
+                      ${crypto.current_price.toLocaleString(undefined, {
+                        minimumFractionDigits:
+                          crypto.current_price < 1 ? 4 : 2,
+                        maximumFractionDigits:
+                          crypto.current_price < 1 ? 4 : 2,
                       })}
                     </span>
                     <div className={`text-[11px] font-semibold flex items-center justify-end space-x-1 ${
@@ -162,7 +160,7 @@ export default function Sidebar() {
                     }`}>
                       {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                       <span>
-                        {isPositive ? "+" : ""}{crypto.percent.toFixed(2)}%
+                        {crypto.price_change_percentage_24h.toFixed(2)}%
                       </span>
                     </div>
                   </div>

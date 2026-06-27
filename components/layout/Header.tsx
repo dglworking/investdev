@@ -45,31 +45,31 @@ export default function Header() {
           <nav className="hidden lg:flex gap-6 text-sm font-medium text-slate-600">
 
             <Link
-              href="/markets"
+              href="/vnstock"
               className={pathname === "/markets" ? "text-sky-600 font-semibold" : ""}
             >
-              Markets
+              Cổ phiếu
             </Link>
 
             <Link
               href="/community"
               className={pathname === "/community" ? "text-sky-600 font-semibold" : ""}
             >
-              Community
+              Thảo luận
             </Link>
 
             <Link
               href="/news"
               className={pathname === "/news" ? "text-sky-600 font-semibold" : ""}
             >
-              News
+              Tin tức
             </Link>
 
             <Link
               href="/watchlist"
               className={pathname === "/watchlist" ? "text-sky-600 font-semibold" : ""}
             >
-              Watchlist
+              Danh sách theo dõi
             </Link>
 
           </nav>
