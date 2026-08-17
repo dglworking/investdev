@@ -40,7 +40,7 @@ export default function RightSidebar() {
           <div className="flex items-center space-x-2 mb-3">
             <TrendingUp size={18} className="text-blue-600" />
             <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Trending
+              Xu hướng thị trường
             </h2>
           </div>
 
