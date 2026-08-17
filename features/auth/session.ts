@@ -6,6 +6,9 @@ export async function logout() {
     console.error("Lỗi đăng xuất:", error.message);
     throw error;
   }
-  // Tải lại trang hoặc chuyển hướng về trang đăng nhập
-  window.location.href = "/";
+
+ 
+  if (typeof window !== "undefined") {
+    window.location.href = "/";
+  }
 }
