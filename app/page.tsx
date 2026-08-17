@@ -10,7 +10,7 @@ import CommunityFeed from "@/components/community/CommunityFeed";
 export default function Home() {
   return (
     <div className="min-h-screen bg-slate-100">
-      <Header />
+      
 
       <main className="mx-auto flex max-w-[1600px]">
         <Sidebar />
@@ -24,7 +24,7 @@ export default function Home() {
           <MarketOverview />
           
           <h1 className="text-3xl font-bold">
-            Crypto Market
+            Tiền điện tử
           </h1>
 
           <CryptoMarket />

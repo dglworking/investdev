@@ -5,11 +5,11 @@ export default function CommunityFeed() {
       <div>
 
         <h2 className="text-2xl font-bold">
-          👥 Community Feed
+          👥 Cộng đồng
         </h2>
 
         <p className="text-slate-500">
-          Latest discussions from the community.
+          Cùng mọi người thảo luận về thị trường
         </p>
 
       </div>

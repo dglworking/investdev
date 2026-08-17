@@ -135,7 +135,7 @@ export default function Sidebar() {
               return (
                 <Link 
                   key={crypto.symbol} 
-                  href={`/markets?ticker=${crypto.symbol}`}
+                  href={`/crypto/${crypto.symbol}`}
                   className="flex justify-between items-center group cursor-pointer hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-150 block"
                 >
                   <div className="space-y-0.5">

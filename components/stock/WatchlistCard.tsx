@@ -5,11 +5,11 @@ export default function WatchlistCard() {
       <div>
 
         <h2 className="text-2xl font-bold">
-          ⭐ My Watchlist
+          ⭐ Watchlist
         </h2>
 
         <p className="text-slate-500">
-          Your favorite assets will appear here.
+          Những mã bạn yêu thích nằm ở đây
         </p>
 
       </div>
