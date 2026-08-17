@@ -1,13 +1,11 @@
 import { supabase } from "@/lib/supabase";
 
-export async function getCurrentUser() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return user;
-}
-
 export async function logout() {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Lỗi đăng xuất:", error.message);
+    throw error;
+  }
+  // Tải lại trang hoặc chuyển hướng về trang đăng nhập
+  window.location.href = "/";
 }
