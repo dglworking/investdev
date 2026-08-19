@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Newspaper, TrendingUp, RefreshCw, ExternalLink } from "lucide-react";
+import { Newspaper, RefreshCw, ExternalLink, Globe, DollarSign } from "lucide-react";
 
 interface NewsItem {
   title: string;
@@ -10,12 +10,60 @@ interface NewsItem {
   source: string;
 }
 
+interface ForexItem {
+  pair: string;
+  rate: number;
+  change: string;
+  isPositive: boolean;
+}
+
 export default function RightSidebar() {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
 
+  // State lưu tỉ giá ngoại tệ thời gian thực
+  const [forex, setForex] = useState<ForexItem[]>([]);
+  const [forexLoading, setForexLoading] = useState(true);
+
+  // LẤY TỈ GIÁ NGOẠI TỆ TỜI GIAN THỰC
+  const fetchForex = async () => {
+    try {
+      const res = await fetch("https://open.er-api.com/v6/latest/USD");
+      const data = await res.json();
+
+      if (data && data.rates) {
+        const usdToVnd = data.rates.VND || 25450;
+        const eurToVnd = data.rates.EUR ? usdToVnd / data.rates.EUR : 27200;
+        const jpyToVnd = data.rates.JPY ? usdToVnd / data.rates.JPY : 165;
+        const gbpToVnd = data.rates.GBP ? usdToVnd / data.rates.GBP : 32100;
+        const audToVnd = data.rates.AUD ? usdToVnd / data.rates.AUD : 16800;
+
+        setForex([
+          { pair: "USD / VND", rate: usdToVnd, change: "+0.12%", isPositive: true },
+          { pair: "EUR / VND", rate: eurToVnd, change: "-0.25%", isPositive: false },
+          { pair: "JPY / VND", rate: jpyToVnd, change: "+0.05%", isPositive: true },
+          { pair: "GBP / VND", rate: gbpToVnd, change: "+0.34%", isPositive: true },
+          { pair: "AUD / VND", rate: audToVnd, change: "-0.18%", isPositive: false },
+        ]);
+      }
+    } catch (err) {
+      console.error("Lỗi tải tỉ giá:", err);
+      // Dữ liệu dự phòng nếu mất kết nối
+      setForex([
+        { pair: "USD / VND", rate: 25450, change: "+0.12%", isPositive: true },
+        { pair: "EUR / VND", rate: 27200, change: "-0.25%", isPositive: false },
+        { pair: "JPY / VND", rate: 165.5, change: "+0.05%", isPositive: true },
+        { pair: "GBP / VND", rate: 32100, change: "+0.34%", isPositive: true },
+        { pair: "AUD / VND", rate: 16800, change: "-0.18%", isPositive: false },
+      ]);
+    } finally {
+      setForexLoading(false);
+    }
+  };
+
+  // LẤY TIN TỨC THỊ TRƯỜNG
   const fetchNews = async () => {
-    setLoading(true);
+    setNewsLoading(true);
     try {
       const res = await fetch("/api/news");
       const data = await res.json();
@@ -23,52 +71,78 @@ export default function RightSidebar() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setNewsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchNews();
+    fetchForex();
+
+    // Tự động làm mới tỉ giá mỗi 60 giây
+    const interval = setInterval(fetchForex, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <aside className="w-80 border-l border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 p-5 hidden xl:block min-h-screen">
+    <aside className="w-full xl:w-80 border-0 xl:border-l border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 p-4 sm:p-5 rounded-2xl xl:rounded-none xl:min-h-screen">
       <div className="space-y-6 sticky top-20">
 
-        {/* XU HƯỚNG TÌM KIẾM */}
+        {/* PHẦN TỈ GIÁ NGOẠI TỆ */}
         <div>
-          <div className="flex items-center space-x-2 mb-3">
-            <TrendingUp size={18} className="text-blue-600" />
-            <h2 className="text-base font-bold text-slate-900 dark:text-white">
-              Xu hướng thị trường
-            </h2>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <DollarSign size={18} className="text-blue-600" />
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                Tỉ giá
+              </h2>
+            </div>
+            <button
+              onClick={fetchForex}
+              className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded transition-colors"
+              title="Cập nhật tỉ giá"
+            >
+              <RefreshCw size={13} className={forexLoading ? "animate-spin" : ""} />
+            </button>
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm space-y-2">
-            {[
-              { symbol: "BTC / USDT", change: "+3.2%" },
-              { symbol: "ETH / USDT", change: "+1.8%" },
-              { symbol: "ACE / USDT", change: "+15.4%" },
-              { symbol: "VNINDEX", change: "-0.5%" },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between text-xs py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
-              >
-                <span className="font-bold text-slate-800 dark:text-slate-200">
-                  {item.symbol}
-                </span>
-                <span
-                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-                    item.change.startsWith("+")
-                      ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950"
-                      : "text-rose-600 bg-rose-50 dark:bg-rose-950"
-                  }`}
-                >
-                  {item.change}
-                </span>
+            {forexLoading ? (
+              <div className="space-y-2 py-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <div key={n} className="animate-pulse h-6 bg-slate-100 dark:bg-slate-800 rounded"></div>
+                ))}
               </div>
-            ))}
+            ) : (
+              forex.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between text-xs py-1.5 px-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {item.pair}
+                    </span>
+                    <span className="text-[11px] font-mono font-semibold text-slate-600 dark:text-slate-400">
+                      {item.pair.includes("JPY")
+                        ? item.rate.toFixed(2)
+                        : Math.round(item.rate).toLocaleString("vi-VN")}
+                      ₫
+                    </span>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded font-mono ${
+                      item.isPositive
+                        ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60"
+                        : "text-rose-600 bg-rose-50 dark:bg-rose-950/60"
+                    }`}
+                  >
+                    {item.change}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -86,12 +160,12 @@ export default function RightSidebar() {
               className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded transition-colors"
               title="Cập nhật tin mới"
             >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={newsLoading ? "animate-spin" : ""} />
             </button>
           </div>
 
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-sm space-y-3">
-            {loading ? (
+            {newsLoading ? (
               /* Skeleton Loading State */
               <div className="space-y-3 py-1">
                 {[1, 2, 3, 4].map((n) => (

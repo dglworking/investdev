@@ -27,11 +27,11 @@ export default function RootLayout({
         {/* Footer */}
         <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-500">
           <div className="max-w-[1650px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© 2026 InvestDev. Nền tảng phân tích tài chính thời gian thực.</p>
+            <p>© 2026 InvestDev. Nền tảng dữ liệu tài chính.</p>
             <div className="flex items-center space-x-4">
-              <span>Dữ liệu Binance API</span>
+              <span>TradingView Chart - Binance API</span>
               <span>•</span>
-              <span>TradingView Chart</span>
+              <span>Powered by MrL</span>
             </div>
           </div>
         </footer>

@@ -34,14 +34,18 @@ export default function CryptoListPage() {
       c.symbol.toLowerCase().includes(search.toLowerCase())
   );
 
-  // VẼ SPARKLINE CÓ HIỆU ỨNG GRADIENT & ĐƯỜNG CONG
-  const renderSparkline = (points: number[], isPositive: boolean, symbol: string) => {
+  // VẼ SPARKLINE CÓ HIỆU ỨNG GRADIENT (Tùy chỉnh linh hoạt width, height cho Mobile/PC)
+  const renderSparkline = (
+    points: number[],
+    isPositive: boolean,
+    symbol: string,
+    width = 140,
+    height = 40
+  ) => {
     if (!points || points.length < 2) return null;
     const min = Math.min(...points);
     const max = Math.max(...points);
     const range = max - min || 1;
-    const width = 140;
-    const height = 40;
 
     const formattedPoints = points.map((p, i) => {
       const x = (i / (points.length - 1)) * width;
@@ -70,28 +74,110 @@ export default function CryptoListPage() {
   };
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6 bg-white dark:bg-slate-950 min-h-screen">
+    <div className="p-4 md:p-6 max-w-[1600px] mx-auto space-y-4 md:space-y-6 bg-white dark:bg-slate-950 min-h-screen">
+      {/* HEADER PAGE & SEARCH */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Thị trường Tiền mã hóa</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Thị trường Tiền mã hóa</h1>
           <p className="text-xs text-slate-500 mt-1">
             Giá tiền mã hóa theo vốn hóa thị trường từ Binance
           </p>
         </div>
+      </div>
 
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
-          <input
-            type="text"
-            placeholder="Tìm kiếm đồng coin..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-1.5 border rounded-lg text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-800 focus:outline-none"
-          />
+      {/* ================= 1. GIAO DIỆN MOBILE (CHỈ HIỂN THỊ TRÊN ĐIỆN THOẠI) ================= */}
+      <div className="block md:hidden border rounded-xl bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+        {/* Tiêu đề 3 cột trên Mobile */}
+        <div className="grid grid-cols-12 text-[11px] font-bold text-slate-400 px-3 py-2.5 border-b bg-slate-50/80 dark:bg-slate-800/50">
+          <div className="col-span-4">Tên / Giá</div>
+          <div className="col-span-4 text-center">Biến động (1h/24h/7d)</div>
+          <div className="col-span-4 text-right">KL 24h & Chart 7d</div>
+        </div>
+
+        {/* Danh sách các mã Coin dạng 3 cột */}
+        <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-medium">
+          {loading ? (
+            <div className="py-10 text-center text-slate-400 animate-pulse">
+              Đang tải bảng giá Crypto...
+            </div>
+          ) : (
+            filteredCoins.map((coin) => {
+              const is1hPos = coin.percent_1h >= 0;
+              const is24hPos = coin.percent_24h >= 0;
+              const is7dPos = coin.percent_7d >= 0;
+
+              return (
+                <div
+                  key={coin.symbol}
+                  onClick={() => router.push(`/crypto/${coin.symbol.toLowerCase()}`)}
+                  className="grid grid-cols-12 gap-1 items-center p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  {/* CỘT 1 (BÊN TRÁI): Tên mã + Giá tiền thời gian thực ngay dưới */}
+                  <div className="col-span-4 flex flex-col justify-center space-y-0.5 pr-1">
+                    <div className="flex items-center space-x-1 overflow-hidden">
+                      <button
+                        onClick={(e) => toggleFavorite(e, coin.symbol)}
+                        className="text-slate-300 hover:text-amber-400 shrink-0"
+                      >
+                        <Star
+                          size={13}
+                          className={favorites[coin.symbol] ? "fill-amber-400 text-amber-400" : ""}
+                        />
+                      </button>
+                      <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                        {coin.name}
+                      </span>
+                      <span className="text-[10px] font-medium text-slate-400 uppercase shrink-0">
+                        {coin.symbol}
+                      </span>
+                    </div>
+
+                    {/* Giá thời gian thực */}
+                    <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100 pl-4">
+                      ${coin.price < 1 ? coin.price.toFixed(4) : coin.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+
+                  {/* CỘT 2 (Ở GIỮA): Biến động thời gian thực 1 giờ, 1 ngày, 7 ngày */}
+                  <div className="col-span-4 flex flex-col items-center justify-center font-mono text-[11px] leading-snug space-y-0.5">
+                    <div className={`flex items-center gap-0.5 ${is1hPos ? "text-green-600" : "text-red-500"}`}>
+                      <span className="text-[9px] text-slate-400 font-sans">1h:</span>
+                      <span>{is1hPos ? "▲" : "▼"}{Math.abs(coin.percent_1h)}%</span>
+                    </div>
+                    <div className={`flex items-center gap-0.5 font-semibold ${is24hPos ? "text-green-600" : "text-red-500"}`}>
+                      <span className="text-[9px] text-slate-400 font-sans">24h:</span>
+                      <span>{is24hPos ? "▲" : "▼"}{Math.abs(coin.percent_24h)}%</span>
+                    </div>
+                    <div className={`flex items-center gap-0.5 ${is7dPos ? "text-green-600" : "text-red-500"}`}>
+                      <span className="text-[9px] text-slate-400 font-sans">7d:</span>
+                      <span>{is7dPos ? "▲" : "▼"}{Math.abs(coin.percent_7d)}%</span>
+                    </div>
+                  </div>
+
+                  {/* CỘT 3 (BÊN PHẢI): Khối lượng 24h & Chart giá 7 ngày qua */}
+                  <div className="col-span-4 flex flex-col items-end justify-center space-y-1 pl-1">
+                    {/* Khối lượng 24h gần nhất */}
+                    <div className="font-mono text-[10px] text-slate-600 dark:text-slate-400 font-medium truncate">
+                      ${coin.volume_24h >= 1e9 
+                        ? (coin.volume_24h / 1e9).toFixed(2) + "B" 
+                        : coin.volume_24h >= 1e6 
+                        ? (coin.volume_24h / 1e6).toFixed(1) + "M" 
+                        : Math.round(coin.volume_24h).toLocaleString()}
+                    </div>
+                    {/* Chart giá 7 ngày qua */}
+                    <div className="w-full flex justify-end">
+                      {renderSparkline(coin.sparkline, is7dPos, coin.symbol + "-mobile", 80, 24)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
-      <div className="border rounded-xl bg-white dark:bg-slate-900 overflow-x-auto shadow-sm">
+      {/* ================= 2. GIAO DIỆN DESKTOP (CHỈ HIỂN THỊ TRÊN MÁY TÍNH - GIỮ NGUYÊN BẢNG CŨ) ================= */}
+      <div className="hidden md:block border rounded-xl bg-white dark:bg-slate-900 overflow-x-auto shadow-sm">
         <table className="w-full text-left border-collapse min-w-[1000px]">
           <thead>
             <tr className="border-b text-[12px] font-semibold text-slate-400 bg-slate-50/50 dark:bg-slate-800/40">

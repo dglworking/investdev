@@ -21,6 +21,40 @@ interface CardState {
   rawData: any[];
 }
 
+// Component vẽ Biểu đồ Mini (Sparkline) riêng cho Mobile
+function MiniSparkline({ rawData, positive }: { rawData: any[]; positive: boolean }) {
+  if (!rawData || rawData.length < 2) return <div className="h-6 w-full" />;
+
+  const prices = rawData.map((d) => d.close);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 1;
+  const width = 100;
+  const height = 28;
+
+  const points = prices
+    .map((val, i) => {
+      const x = (i / (prices.length - 1)) * width;
+      const y = height - ((val - min) / range) * (height - 6) - 3;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const color = positive ? "#10b981" : "#ef4444";
+  const lastX = width;
+  const lastY = height - ((prices[prices.length - 1] - min) / range) * (height - 6) - 3;
+
+  return (
+    <div className="w-full h-7 mt-1">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+        <line x1="0" y1={height / 2} x2={width} y2={height / 2} stroke="#e2e8f0" strokeDasharray="2 2" strokeWidth="1" />
+        <polyline fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" points={points} />
+        <circle cx={lastX} cy={lastY} r="2.5" fill={color} />
+      </svg>
+    </div>
+  );
+}
+
 export default function MarketOverview() {
   const [marketData, setMarketData] = useState<{ [key: string]: CardState }>({
     VNINDEX: { value: "...", change: "Đang tải...", positive: true, rawData: [] },
@@ -48,7 +82,6 @@ export default function MarketOverview() {
       return {
         ...s,
         displayDate: new Date(s.time).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-        
         volumeColor: s.close >= prevClose ? "#10b981" : "#ef4444"
       };
     });
@@ -62,11 +95,8 @@ export default function MarketOverview() {
   };
 
   useEffect(() => {
-
     async function loadSummary() {
-
       const raw = await getMarketSummary();
-
       if (!raw) return;
 
       setMarketData({
@@ -75,11 +105,9 @@ export default function MarketOverview() {
         HNX: processIndexData(raw.HNX),
         UPCOM: processIndexData(raw.UPCOM),
       });
-
     }
 
     loadSummary();
-
   }, []);
 
   const chartData = marketData[selectedIndex]?.rawData || [];
@@ -89,10 +117,54 @@ export default function MarketOverview() {
   const mainColor = isMarketUp ? "#10b981" : "#ef4444";
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6">
 
-      {/* Grid danh sách các chỉ số */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      {/* ================= 1. GIAO DIỆN MOBILE (Chỉ hiện trên Điện thoại) ================= */}
+      <div className="block md:hidden space-y-2">
+        
+
+        {/* Dàn 3 Cột: VNINDEX - HNX - VN30 */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {["VNINDEX", "HNX", "VN30"].map((key) => {
+            const item = marketData[key];
+            const isSelected = selectedIndex === key;
+            return (
+              <div
+                key={key}
+                onClick={() => setSelectedIndex(key)}
+                className={`bg-white rounded-xl border p-2 flex flex-col justify-between transition-all cursor-pointer ${
+                  isSelected ? "border-blue-500 ring-1 ring-blue-500 shadow-xs" : "border-slate-200"
+                }`}
+              >
+                {/* Header: Icon đồng hồ + Tên mã */}
+                <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-400 uppercase">
+                  <svg className="w-2.5 h-2.5 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path strokeLinecap="round" strokeWidth="2" d="M12 7v5l3 2" />
+                  </svg>
+                  <span className="truncate">{key}</span>
+                </div>
+
+                {/* Chỉ số & Biến động */}
+                <div className="text-center my-0.5">
+                  <div className="text-xs font-extrabold text-slate-900 leading-tight">
+                    {item.value}
+                  </div>
+                  <div className={`text-[9px] font-semibold leading-none mt-0.5 ${item.positive ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {item.change}
+                  </div>
+                </div>
+
+                {/* Biểu đồ Mini thời gian thực */}
+                <MiniSparkline rawData={item.rawData} positive={item.positive} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ================= 2. GIAO DIỆN DESKTOP (Chỉ hiện trên PC / Máy tính) ================= */}
+      <div className="hidden md:grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {["VNINDEX", "VN30", "HNX", "UPCOM"].map((key) => (
           <div
             key={key}
@@ -111,21 +183,21 @@ export default function MarketOverview() {
         ))}
       </div>
 
-      {}
+      {/* ================= 3. BIỂU ĐỒ CHI TIẾT DÙNG CHUNG CẢ PC VÀ MOBILE ================= */}
       {chartData.length > 0 && (
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="bg-white p-4 md:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex justify-between items-baseline">
-            <div className="flex items-baseline space-x-3">
-              <h3 className="text-xl font-bold text-slate-800">{selectedIndex}</h3>
-              <span className="text-2xl font-mono font-bold">{latestPrice.toFixed(2)}</span>
-              <span className={`text-sm font-semibold ${marketData[selectedIndex].positive ? 'text-green-500' : 'text-red-500'}`}>
+            <div className="flex items-baseline space-x-2 md:space-x-3">
+              <h3 className="text-lg md:text-xl font-bold text-slate-800">{selectedIndex}</h3>
+              <span className="text-xl md:text-2xl font-mono font-bold">{latestPrice.toFixed(2)}</span>
+              <span className={`text-xs md:text-sm font-semibold ${marketData[selectedIndex].positive ? 'text-green-500' : 'text-red-500'}`}>
                 {marketData[selectedIndex].change}
               </span>
             </div>
             <span className="text-xs font-medium text-slate-400">Đồ thị 30 phiên</span>
           </div>
 
-          <div className="w-full h-80 bg-white pt-4">
+          <div className="w-full h-64 md:h-80 bg-white pt-2 md:pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 10, right: -10, left: 0, bottom: 0 }}>
                 <defs>
@@ -162,7 +234,6 @@ export default function MarketOverview() {
                   domain={[0, (dataMax: number) => dataMax * 5]}
                 />
 
-                {/* Cấu hình Tooltip an toàn, chống lỗi TypeScript */}
                 <Tooltip 
                   formatter={(value: any, name: any): any => {
                     if (name === "close") return [value.toFixed(2), "Giá"];
@@ -185,7 +256,6 @@ export default function MarketOverview() {
                   fill="url(#chartGradient)" 
                 />
 
-                {}
                 <Bar 
                   yAxisId="volume"
                   dataKey="volume" 
