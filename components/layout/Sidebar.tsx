@@ -82,7 +82,7 @@ export default function Sidebar() {
               return (
                 <Link 
                   key={stock.symbol} 
-                  href={`/markets?ticker=${stock.symbol}`}
+                  href={`/vnstock/${stock.symbol}`}
                   className="flex justify-between items-center group cursor-pointer hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-150 block"
                 >
                   <div className="space-y-0.5 max-w-[55%]">
