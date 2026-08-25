@@ -35,7 +35,8 @@ export default function Sidebar() {
       if (!mounted) return;
 
       setStocks(stocksData);
-      setCryptos(cryptoData);
+      // Lấy đúng 5 mã Crypto có khối lượng giao dịch lớn nhất
+      setCryptos(cryptoData ? cryptoData.slice(0, 5) : []);
 
       setLoadingStocks(false);
       setLoadingCryptos(false);
@@ -113,7 +114,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* KHỐI CRYPTO - GIỮ NGUYÊN BẢN 100% THEO FILE ĐÃ UP */}
+      {/* KHỐI CRYPTO - HIỂN THỊ TỐI ĐA 5 MÃ TOP VOLUME */}
       <div className="bg-[#1e222d] text-slate-100 p-4 rounded-2xl shadow-lg border border-slate-800 space-y-4">
         <div className="flex justify-between items-center border-b border-slate-800 pb-2">
           <div className="flex items-center space-x-2">
@@ -128,31 +129,30 @@ export default function Sidebar() {
         <div className="space-y-3">
           {loadingCryptos ? (
             <p className="text-xs text-slate-500 animate-pulse py-2">Đang kết nối luồng Binance...</p>
+          ) : cryptos.length === 0 ? (
+            <p className="text-xs text-slate-400 py-2">Chưa có dữ liệu</p>
           ) : (
-            cryptos.map((crypto) => {
-              const isPositive =
-                crypto.price_change_percentage_24h >= 0;
+            cryptos.slice(0, 5).map((crypto) => {
+              const isPositive = crypto.price_change_percentage_24h >= 0;
               return (
                 <Link 
                   key={crypto.symbol} 
-                  href={`/crypto/${crypto.symbol}`}
+                  href={`/crypto/${crypto.symbol.toLowerCase()}`}
                   className="flex justify-between items-center group cursor-pointer hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-150 block"
                 >
                   <div className="space-y-0.5">
-                    <h4 className="font-bold text-sm tracking-wide text-white group-hover:text-yellow-400 transition-colors">
+                    <h4 className="font-bold text-sm tracking-wide text-white group-hover:text-yellow-400 transition-colors uppercase">
                       ${crypto.symbol}
                     </h4>
-                    <p className="text-[10px] text-slate-400 font-medium">
+                    <p className="text-[10px] text-slate-400 font-medium truncate max-w-[90px]">
                       {crypto.name}
                     </p>
                   </div>
                   <div className="text-right font-mono">
                     <span className="text-sm font-bold text-slate-100">
                       ${crypto.current_price.toLocaleString(undefined, {
-                        minimumFractionDigits:
-                          crypto.current_price < 1 ? 4 : 2,
-                        maximumFractionDigits:
-                          crypto.current_price < 1 ? 4 : 2,
+                        minimumFractionDigits: crypto.current_price < 1 ? 4 : 2,
+                        maximumFractionDigits: crypto.current_price < 1 ? 4 : 2,
                       })}
                     </span>
                     <div className={`text-[11px] font-semibold flex items-center justify-end space-x-1 ${
@@ -160,7 +160,7 @@ export default function Sidebar() {
                     }`}>
                       {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                       <span>
-                        {crypto.price_change_percentage_24h.toFixed(2)}%
+                        {isPositive ? "+" : ""}{crypto.price_change_percentage_24h.toFixed(2)}%
                       </span>
                     </div>
                   </div>

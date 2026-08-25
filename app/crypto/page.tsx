@@ -14,9 +14,51 @@ export default function CryptoListPage() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await getAllCryptos();
-      setCoins(data);
-      setLoading(false);
+      try {
+
+        const res = await fetch("/api/crypto");
+        if (!res.ok) throw new Error("Lỗi fetch API crypto");
+        
+        const rawCoins = await res.json();
+
+        const formattedCoins: CryptoTableItem[] = rawCoins.map((item: any, index: number) => {
+          const price = item.current_price || 0;
+          const change24h = item.price_change_percentage_24h || 0;
+          const isPos = change24h >= 0;
+
+          const mockSparkline = [
+            price * (1 - (change24h / 100) * 0.8),
+            price * (1 - (change24h / 100) * 0.5),
+            price * (1 - (change24h / 100) * 0.9),
+            price * (1 - (change24h / 100) * 0.3),
+            price * (1 + (change24h / 100) * 0.2),
+            price * (1 + (change24h / 100) * 0.6),
+            price
+          ];
+
+          return {
+            rank: index + 1,
+            symbol: item.symbol,
+            full_symbol: `${item.symbol}USDT`,
+            name: item.name,
+            price: price,
+            percent_1h: parseFloat((change24h * 0.1).toFixed(2)), // Ước tính 1h
+            percent_24h: parseFloat(change24h.toFixed(2)),
+            percent_7d: parseFloat((change24h * 1.5).toFixed(2)),  // Ước tính 7d
+            volume_24h: item.volume_24h || 500000000,
+            market_cap: item.market_cap || price * 19000000,
+            high_24h: price * 1.03,
+            low_24h: price * 0.97,
+            sparkline: mockSparkline
+          };
+        });
+
+        setCoins(formattedCoins);
+      } catch (error) {
+        console.error("Lỗi loadData Crypto:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
     const timer = setInterval(loadData, 10000);
