@@ -141,28 +141,15 @@ export async function getMarketSummary(): Promise<MarketSummary | null> {
 
 export async function getCryptoMarket(): Promise<Coin[]> {
   try {
-    const res = await fetch(API.crypto, {
-      cache: "no-store",
-    });
+    const res = await fetch("/api/crypto");
 
     if (!res.ok) {
-      console.error(`${API.crypto} -> ${res.status}`);
+      console.error(`/api/crypto -> ${res.status}`);
       return [];
     }
 
-    const json: CryptoResponse = await res.json();
-
-    if (!json.success) {
-      return [];
-    }
-
-    return json.data.map((item) => ({
-      id: item.symbol.toLowerCase(),
-      symbol: item.symbol,
-      name: item.name,
-      current_price: item.price,
-      price_change_percentage_24h: item.percent,
-    }));
+    const data: Coin[] = await res.json();
+    return data;
   } catch (err) {
     console.error(err);
     return [];

@@ -55,13 +55,6 @@ function MiniSparkline({ rawData, positive }: { rawData: ChartPoint[]; positive:
   );
 }
 
-const MOCK_COINS: Coin[] = [
-  { id: "bitcoin", symbol: "BTC", name: "Bitcoin", current_price: 65420.5, price_change_percentage_24h: 2.35 },
-  { id: "ethereum", symbol: "ETH", name: "Ethereum", current_price: 3450.2, price_change_percentage_24h: -0.85 },
-  { id: "solana", symbol: "SOL", name: "Solana", current_price: 148.75, price_change_percentage_24h: 5.12 },
-  { id: "binancecoin", symbol: "BNB", name: "BNB", current_price: 580.1, price_change_percentage_24h: 1.15 },
-];
-
 export default function CryptoMarket() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,24 +62,12 @@ export default function CryptoMarket() {
 
   useEffect(() => {
     async function load() {
-      try {
-        const data = await getCryptoMarket();
-        // Nếu API trả về mảng dữ liệu hợp lệ
-        if (data && Array.isArray(data) && data.length > 0) {
-          setCoins(data);
-          setSelectedCoinId(data[0].id);
-        } else {
-          // Nếu API trả về rỗng -> Dùng dữ liệu dự phòng
-          setCoins(MOCK_COINS);
-          setSelectedCoinId(MOCK_COINS[0].id);
-        }
-      } catch (error) {
-        console.warn("Lỗi tải Crypto Market, sử dụng dữ liệu dự phòng:", error);
-        setCoins(MOCK_COINS);
-        setSelectedCoinId(MOCK_COINS[0].id);
-      } finally {
-        setLoading(false);
+      const data = await getCryptoMarket();
+      setCoins(data);
+      if (data && data.length > 0) {
+        setSelectedCoinId(data[0].id);
       }
+      setLoading(false);
     }
 
     load();
