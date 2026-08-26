@@ -29,7 +29,6 @@ const COIN_NAMES: Record<string, string> = {
   BCHUSDT: "Bitcoin Cash",
   UNIUSDT: "Uniswap",
   TRXUSDT: "TRON",
-  NEARUSDT: "NEAR",
 };
 
 export async function GET() {
