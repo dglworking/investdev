@@ -57,8 +57,16 @@ export default function CryptoDetailPage({ params }: { params: Promise<{ symbol:
 
   useEffect(() => {
     async function loadBook() {
-      const book = await getCryptoOrderBook(rawSymbol);
-      if (book) setOrderBook(book);
+      try {
+        
+        const res = await fetch(`/api/crypto?symbol=${rawSymbol}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrderBook(data);
+        }
+      } catch (err) {
+        console.error("Lỗi tải sổ lệnh:", err);
+      }
     }
 
     loadBook();
